@@ -318,7 +318,6 @@ local waterlily_def = {
 				end
 			else
 				minetest.chat_send_player(player_name, "This area is protected")
-				minetest.record_protection_violation(pos, player_name)
 			end
 		end
 
