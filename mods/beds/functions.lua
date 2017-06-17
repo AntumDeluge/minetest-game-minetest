@@ -1,4 +1,10 @@
 local pi = math.pi
+
+local enable_night_skip = minetest.settings:get_bool("enable_bed_night_skip")
+if enable_night_skip == nil then
+	enable_night_skip = true
+end
+
 local is_sp = minetest.is_singleplayer()
 local enable_respawn = minetest.settings:get_bool("enable_bed_respawn")
 if enable_respawn == nil then
@@ -24,14 +30,6 @@ local function get_look_yaw(pos)
 	else
 		return 0, rotation
 	end
-end
-
-local function is_night_skip_enabled()
-	local enable_night_skip = minetest.settings:get_bool("enable_bed_night_skip")
-	if enable_night_skip == nil then
-		enable_night_skip = true
-	end
-	return enable_night_skip
 end
 
 local function check_in_beds(players)
@@ -158,7 +156,7 @@ local function update_formspecs(finished)
 	else
 		form_n = beds.formspec .. "label[2.2,9;" ..
 			esc(S("@1 of @2 players are in bed", player_in_bed, ges)) .. "]"
-		if is_majority and is_night_skip_enabled() then
+		if is_majority and enable_night_skip then
 			form_n = form_n .. "button_exit[2,6;4,0.75;force;" ..
 				esc(S("Force night skip")) .. "]"
 		end
@@ -212,9 +210,9 @@ function beds.on_rightclick(pos, player)
 	if check_in_beds() then
 		minetest.after(2, function()
 			if not is_sp then
-				update_formspecs(is_night_skip_enabled())
+				update_formspecs(enable_night_skip)
 			end
-			if is_night_skip_enabled() then
+			if enable_night_skip then
 				beds.skip_night()
 				beds.kick_players()
 			end
@@ -252,8 +250,8 @@ minetest.register_on_leaveplayer(function(player)
 	beds.player[name] = nil
 	if check_in_beds() then
 		minetest.after(2, function()
-			update_formspecs(is_night_skip_enabled())
-			if is_night_skip_enabled() then
+			update_formspecs(enable_night_skip)
+			if enable_night_skip then
 				beds.skip_night()
 				beds.kick_players()
 			end
@@ -291,7 +289,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
 	if fields.force then
 		local is_majority = (#minetest.get_connected_players() / 2) < last_player_in_bed
-		if is_majority and is_night_skip_enabled() then
+		if is_majority and enable_night_skip then
 			update_formspecs(true)
 			beds.skip_night()
 			beds.kick_players()
